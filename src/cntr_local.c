@@ -1,6 +1,11 @@
 #include "cntr_local.h"
 
-//Funções de configuração
+/********************* Variaveis Globais ************************/
+
+volatile uint32_t passado = 0; //Usada para implementar o debouncing
+
+
+/***************** Implementação das Funções *********************/
 /**
  * @brief inicia os pinos de GPIO
  */
@@ -27,4 +32,36 @@ void config_pins_gpio()
     //Configuração do LED azul
     gpio_init(LED_B);
     gpio_set_dir(LED_B, GPIO_OUT);
+}
+
+/**
+ * Coloca o Pico no modo gravação
+ */
+void modo_gravacao()
+{    
+    printf("Entrando no modo de gravacao...\n");
+    reset_usb_boot(0, 0); 
+}
+
+/**
+ * @brief trata a interrupção gerada pelos botões A e B da BitDog
+ * @param gpio recebe o pino que gerou a interrupção
+ * @param events recebe o evento que causou a interrupção
+ */
+void botoes_callback(uint gpio, uint32_t events)
+{
+    printf("Interrupcao");
+    // Obtém o tempo atual em microssegundos
+    uint32_t agora = to_us_since_boot(get_absolute_time());
+    // Verifica se passou tempo suficiente desde o último evento
+    if (agora - passado > 500000) // 500 ms de debouncing
+    {
+        passado  = agora;
+        if(gpio == bot_A)
+        {
+
+        }
+        else if(gpio == bot_B)
+            modo_gravacao();
+    }
 }

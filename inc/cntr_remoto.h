@@ -26,6 +26,6 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
 
 void user_request(char **request);
 
-void start_remote();
+int start_remote();
 
 #endif //CNTR_REMOTO_H

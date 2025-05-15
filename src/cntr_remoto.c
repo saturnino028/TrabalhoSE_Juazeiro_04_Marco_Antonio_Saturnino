@@ -1,53 +1,80 @@
 #include "cntr_remoto.h"
 
-//Inicializa o sistema remoto (webserver)
-void start_remote()
+/**
+ * @brief Inicializa o sistema remoto (webserver)
+ * @return retorna 0 se tudo certo, código de erro se algo deu errado
+ */
+int start_remote()
 {
-    //Inicializa a arquitetura do cyw43
-    if(cyw43_arch_init() != 0) //Se falhar
-        for(int i = 0; i<15; i++) //Sinal visual de erro
+    // Inicializa a arquitetura do CYW43
+    if (cyw43_arch_init() != 0)
+    {
+        for (int i = 0; i < 15; i++)
         {
             gpio_put(LED_R, 1);
             sleep_ms(100);
             gpio_put(LED_R, 0);
             sleep_ms(100);
         }
-    else //Se inicializar corretamente, configura
-    {
-        // Ativa o Wi-Fi no modo Station
-        cyw43_arch_enable_sta_mode();
-        if(!cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 20000))
-            gpio_put(LED_G, 1);
-
-        // Caso seja a interface de rede padrão - imprimir o IP do dispositivo.
-        if (netif_default)
-        {
-            printf("IP do dispositivo: %s\n", ipaddr_ntoa(&netif_default->ip_addr));
-        }
-
-        // Configura o servidor TCP - cria novos PCBs TCP. É o primeiro passo para estabelecer uma conexão TCP.
-        struct tcp_pcb *server = tcp_new();
-        if (!server)
-        {
-            printf("Falha ao criar servidor TCP\n");
-            return;
-        }
-
-        //vincula um PCB (Protocol Control Block) TCP a um endereço IP e porta específicos.
-        if (tcp_bind(server, IP_ADDR_ANY, 80) != ERR_OK)
-        {
-            printf("Falha ao associar servidor TCP à porta 80\n");
-            return;
-        }
-
-        // Coloca um PCB (Protocol Control Block) TCP em modo de escuta, permitindo que ele aceite conexões de entrada.
-        server = tcp_listen(server);
-
-        // Define uma função de callback para aceitar conexões TCP de entrada. É um passo importante na configuração de servidores TCP.
-        tcp_accept(server, tcp_server_accept);
-        printf("Servidor ouvindo na porta 80\n");
+        return 1; // Falha na inicialização
     }
+
+    // Ativa Wi-Fi no modo Station
+    cyw43_arch_enable_sta_mode();
+
+    // Conecta ao Wi-Fi com timeout
+    if (!cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 20000))
+    {
+        gpio_put(LED_G, 1); // Conectado com sucesso
+    }
+    else
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            gpio_put(LED_R, 1);
+            sleep_ms(100);
+            gpio_put(LED_R, 0);
+            sleep_ms(100);
+        }
+        return 1; // Falha na conexão Wi-Fi
+    }
+
+    // Cria o servidor TCP
+    struct tcp_pcb *server = tcp_new();
+    if (!server)
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            gpio_put(LED_R, 1);
+            sleep_ms(100);
+            gpio_put(LED_R, 0);
+            sleep_ms(100);
+        }
+        return 1; // Falha ao criar servidor
+    }
+
+    // Vincula o servidor à porta 80
+    if (tcp_bind(server, IP_ADDR_ANY, 80) != ERR_OK)
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            gpio_put(LED_R, 1);
+            sleep_ms(100);
+            gpio_put(LED_R, 0);
+            sleep_ms(100);
+        }
+        return 1; // Falha no bind
+    }
+
+    // Coloca o servidor para escutar conexões
+    server = tcp_listen(server);
+
+    // Define função de callback para conexões TCP
+    tcp_accept(server, tcp_server_accept);
+
+    return 0; // Tudo certo
 }
+
 
 // Tratamento do request do usuário - digite aqui
 void user_request(char **request){

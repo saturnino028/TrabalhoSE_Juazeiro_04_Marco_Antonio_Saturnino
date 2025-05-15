@@ -43,6 +43,9 @@
         "lwipopts.h": "c",
         "stdlib.h": "c",
         "credenciais_wifi.h": "c",
-        "cntr_local.h": "c"
+        "cntr_local.h": "c",
+        "cntr_remoto.h": "c",
+        "pinout.h": "c",
+        "bootrom.h": "c"
     }
 }

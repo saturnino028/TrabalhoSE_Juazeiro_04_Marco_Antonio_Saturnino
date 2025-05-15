@@ -10,7 +10,38 @@ int main()
     stdio_init_all();
     config_pins_gpio();
     config_i2c_display(&ssd);
-    start_remote();
+
+    ssd1306_fill(&ssd, !cor); // Limpa o display
+    ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "  EMBARCATECH", 5, 15); // Desenha uma string
+    ssd1306_draw_string(&ssd, "   RESTIC 37", 5, 29); // Desenha uma string  
+    ssd1306_draw_string(&ssd, "    AGUARDE", 5, 43); // Desenha uma string      
+    ssd1306_send_data(&ssd); // Atualiza o display
+
+    gpio_set_irq_enabled_with_callback(bot_B, GPIO_IRQ_EDGE_FALL, true, &botoes_callback); //Ativa modo gravação
+    
+    if(!start_remote())
+    {
+        if (netif_default) // Caso seja a interface de rede padrão - imprimir o IP do dispositivo.
+        {
+            ssd1306_fill(&ssd, !cor); // Limpa o display
+            ssd1306_draw_string(&ssd, "Conectado no IP", 5, 13); // Desenha uma string
+            ssd1306_draw_string(&ssd, ipaddr_ntoa(&netif_default->ip_addr), 15, 35);  
+            ssd1306_draw_string(&ssd, "    Porta 80", 5, 52); // Desenha uma string  
+            ssd1306_send_data(&ssd); // Atualiza o display
+        }
+    }
+    else
+    {
+        ssd1306_fill(&ssd, !cor); // Limpa o display
+        ssd1306_draw_string(&ssd, "Erro de Conex.", 5, 15); // Desenha uma string
+        ssd1306_draw_string(&ssd, "Verifique.", 5, 29);  
+        ssd1306_draw_string(&ssd, "Apenas Local", 5, 43); // Desenha uma string  
+        ssd1306_send_data(&ssd); // Atualiza o display
+        gpio_put(LED_R, 1);
+        gpio_put(LED_G, 0);
+        gpio_put(LED_B, 0);
+    }
 
     while (true)
     {
