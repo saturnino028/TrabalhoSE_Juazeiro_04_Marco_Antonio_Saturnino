@@ -17,8 +17,6 @@ int main()
     ssd1306_draw_string(&ssd, "   RESTIC 37", 5, 29); // Desenha uma string  
     ssd1306_draw_string(&ssd, "    AGUARDE", 5, 43); // Desenha uma string      
     ssd1306_send_data(&ssd); // Atualiza o display
-
-    gpio_set_irq_enabled_with_callback(bot_B, GPIO_IRQ_EDGE_FALL, true, &botoes_callback); //Ativa modo gravação
     
     if(!start_remote())
     {
@@ -45,6 +43,9 @@ int main()
 
     while (true)
     {
+        int c = getchar_timeout_us(1000); //Fazer leitura da serial
+        if(c == '*')
+            modo_gravacao();
         /* 
         * Efetuar o processamento exigido pelo cyw43_driver ou pela stack TCP/IP.
         * Este método deve ser chamado periodicamente a partir do ciclo principal 

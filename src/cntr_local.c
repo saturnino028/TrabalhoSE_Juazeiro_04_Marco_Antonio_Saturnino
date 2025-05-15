@@ -62,6 +62,8 @@ void botoes_callback(uint gpio, uint32_t events)
 
         }
         else if(gpio == bot_B)
-            modo_gravacao();
+        {
+            
+        }
     }
 }

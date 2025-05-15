@@ -10,6 +10,7 @@
 
 /******************* Prototipo de Funções *************************/
 void config_pins_gpio();
+void modo_gravacao();
 void botoes_callback(uint gpio, uint32_t events);
 
 #endif //CNTR_LOCAL_H
