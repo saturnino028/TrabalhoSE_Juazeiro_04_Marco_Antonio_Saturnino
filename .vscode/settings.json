@@ -46,6 +46,8 @@
         "cntr_local.h": "c",
         "cntr_remoto.h": "c",
         "pinout.h": "c",
-        "bootrom.h": "c"
+        "bootrom.h": "c",
+        "compare": "c",
+        "cstdint": "c"
     }
 }

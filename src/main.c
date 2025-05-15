@@ -5,8 +5,11 @@ int main()
     //Declaração de Variáveis
     ssd1306_t ssd;
     bool cor = true;    //Estado LEDs display
+    uint slice[3], slice_buzzer = config_pwm(buz_A, 1000);
+    float volume = 2.0;
 
     //Incialização do sistema
+    set_sys_clock_khz(1250000,false); //Cofigura o clock
     stdio_init_all();
     config_pins_gpio();
     config_i2c_display(&ssd);
@@ -17,6 +20,7 @@ int main()
     ssd1306_draw_string(&ssd, "   RESTIC 37", 5, 29); // Desenha uma string  
     ssd1306_draw_string(&ssd, "    AGUARDE", 5, 43); // Desenha uma string      
     ssd1306_send_data(&ssd); // Atualiza o display
+    campainha(volume, 1000, slice_buzzer, buz_A);
     
     if(!start_remote())
     {
@@ -28,9 +32,16 @@ int main()
             ssd1306_draw_string(&ssd, "    Porta 80", 5, 52); // Desenha uma string  
             ssd1306_send_data(&ssd); // Atualiza o display
         }
+        campainha(volume, 1000, slice_buzzer, buz_A);
+        slice[R] = config_pwm(LED_R, 1000);
+        slice[G] = config_pwm(LED_G, 1000);
+        slice[B] = config_pwm(LED_B, 1000);
+
+        duty_cicle(100,slice[G], LED_G);
     }
     else
     {
+        campainha(volume, 1000, slice_buzzer, buz_A);
         ssd1306_fill(&ssd, !cor); // Limpa o display
         ssd1306_draw_string(&ssd, "Erro de Conex.", 5, 15); // Desenha uma string
         ssd1306_draw_string(&ssd, "Verifique.", 5, 29);  
@@ -46,6 +57,8 @@ int main()
         int c = getchar_timeout_us(1000); //Fazer leitura da serial
         if(c == '*')
             modo_gravacao();
+        
+        
         /* 
         * Efetuar o processamento exigido pelo cyw43_driver ou pela stack TCP/IP.
         * Este método deve ser chamado periodicamente a partir do ciclo principal 

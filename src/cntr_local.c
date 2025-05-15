@@ -4,6 +4,15 @@
 
 volatile uint32_t passado = 0; //Usada para implementar o debouncing
 
+volatile uint16_t top_wrap = 1000; //Define um top wrap padrão
+
+typedef struct 
+{
+    uint _slice;
+    uint8_t _pin;
+} def_canais_pwm;
+
+def_canais_pwm dados;
 
 /***************** Implementação das Funções *********************/
 /**
@@ -35,6 +44,56 @@ void config_pins_gpio()
 }
 
 /**
+ * @brief Configura os pinos PWM
+ */
+uint config_pwm(uint8_t _pin, uint16_t _freq_Hz)
+{
+    uint slice; float Fpwm;
+    top_wrap = 1000000/_freq_Hz;
+    gpio_set_function(_pin, GPIO_FUNC_PWM); //Habilita a função PWM
+    slice = pwm_gpio_to_slice_num(_pin);//Obter o valor do slice correspondente ao pino
+    pwm_set_clkdiv(slice, 125.0); //Define o divisor de clock
+    pwm_set_wrap(slice, top_wrap); //Define valor do wrap
+    Fpwm = 125000000/(125.0*top_wrap);
+    printf("PWM definido para %.2f Hz\n", Fpwm);
+    return slice; //Retorna o slice correspondente
+}
+
+/**
+ * @brief ajusta o duty cicle
+ */
+void duty_cicle(float _percent, uint _slice, uint8_t _pin)
+{
+    pwm_set_enabled(_slice, false); //Desabilita PWM
+    uint16_t valor_pwm = (_percent/100)*top_wrap; //Configura DutyCicle
+    pwm_set_gpio_level(_pin, valor_pwm); //Configura DutyCicle
+    pwm_set_enabled(_slice, true); //Habilitar PWM
+}
+
+/**
+ * @brief função para som no buzzer
+ */
+void campainha(float _dc, uint32_t _duracao_ms, uint _slice, uint8_t _pin)
+{
+    duty_cicle(_dc, _slice, _pin);
+    dados._slice = _slice;
+    dados._pin = _pin;
+    add_alarm_in_ms(_duracao_ms, fim_campainha, &dados, false);
+}
+
+/**
+ * @brief função de callback para desativar a campainha
+ */
+int64_t fim_campainha(alarm_id_t id, void *user_data)
+{
+    def_canais_pwm *data = (def_canais_pwm *)user_data;
+    uint _slice = data -> _slice;
+    uint8_t _pin = data -> _pin;
+    duty_cicle(0.0, _slice, _pin);
+    return 0;
+}
+
+/**
  * Coloca o Pico no modo gravação
  */
 void modo_gravacao()
@@ -63,7 +122,7 @@ void botoes_callback(uint gpio, uint32_t events)
         }
         else if(gpio == bot_B)
         {
-            
+
         }
     }
 }
