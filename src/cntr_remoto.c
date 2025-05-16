@@ -1,4 +1,48 @@
 #include "cntr_remoto.h"
+#include "cntr_local.h"
+
+/********************* Variaveis Globais ************************/
+
+
+/***************** Implementação das Funções *********************/
+/**
+ * @brief inicializar servidor remoto
+ */
+void init_remote_def(ssd1306_t *ssd, uint _sliceBuzzer, uint _sliceLEDS[3])
+{    
+    bool cor = true;    //Estado LEDs display
+    float volume = 2.0; //Volume do buzzer
+    if(!start_remote())
+    {
+        if (netif_default) // Caso seja a interface de rede padrão - imprimir o IP do dispositivo.
+        {
+            ssd1306_fill(ssd, !cor); // Limpa o display
+            ssd1306_draw_string(ssd, "Conectado no IP", 5, 13); // Desenha uma string
+            ssd1306_draw_string(ssd, ipaddr_ntoa(&netif_default->ip_addr), 15, 35);  
+            ssd1306_draw_string(ssd, "    Porta 80", 5, 52); // Desenha uma string  
+            ssd1306_send_data(ssd); // Atualiza o display
+        }
+        campainha(volume, 1000, _sliceBuzzer, buz_A);
+        _sliceLEDS[R] = config_pwm(LED_R, 1000);
+        _sliceLEDS[G] = config_pwm(LED_G, 1000);
+        _sliceLEDS[B] = config_pwm(LED_B, 1000);
+
+        duty_cicle(100,_sliceLEDS[G], LED_G);
+    }
+    else
+    {
+        campainha(volume, 1000, _sliceBuzzer, buz_A);
+        ssd1306_fill(ssd, !cor); // Limpa o display
+        ssd1306_draw_string(ssd, "Erro de Conex.", 5, 15); // Desenha uma string
+        ssd1306_draw_string(ssd, "Verifique.", 5, 29);  
+        ssd1306_draw_string(ssd, "Apenas Local", 5, 43); // Desenha uma string  
+        ssd1306_send_data(ssd); // Atualiza o display
+        gpio_put(LED_R, 1);
+        gpio_put(LED_G, 0);
+        gpio_put(LED_B, 0);
+    }
+    
+}
 
 /**
  * @brief Inicializa o sistema remoto (webserver)
@@ -77,7 +121,8 @@ int start_remote()
 
 
 // Tratamento do request do usuário - digite aqui
-void user_request(char **request){
+void user_request(char **request)
+{
 
     if (strstr(*request, "GET /blue_on") != NULL)
     {
@@ -113,14 +158,6 @@ void user_request(char **request){
     }
 };
 
-// Leitura da temperatura interna
-float temp_read(void){
-    uint16_t raw_value = 3000;
-    const float conversion_factor = 3.3f / (1 << 12);
-    float temperature = 27.0f - ((raw_value * conversion_factor) - 0.706f) / 0.001721f;
-        return temperature;
-}
-
 // Função de callback para processar requisições HTTP
 err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 {
@@ -145,7 +182,7 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
     float temperature = temp_read();
 
     // Cria a resposta HTML
-    char html[1024];
+    char html[4096];
 
     // Instruções html do webserver
     snprintf(html, sizeof(html), // Formatar uma string e armazená-la em um buffer de caracteres

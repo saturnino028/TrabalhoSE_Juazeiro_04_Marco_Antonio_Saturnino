@@ -16,6 +16,19 @@ def_canais_pwm dados;
 
 /***************** Implementação das Funções *********************/
 /**
+ * @brief configura as definições locais - inicia
+ */
+void init_local_def()
+{
+    set_sys_clock_khz(1250000,false); //Cofigura o clock
+    stdio_init_all();
+    config_pins_gpio();
+
+    adc_init();
+    adc_set_temp_sensor_enabled(true);
+}
+
+/**
  * @brief inicia os pinos de GPIO
  */
 void config_pins_gpio()
@@ -125,4 +138,14 @@ void botoes_callback(uint gpio, uint32_t events)
 
         }
     }
+}
+
+// Leitura da temperatura interna
+float temp_read(void)
+{
+    adc_select_input(4);
+    uint16_t raw_value = adc_read();
+    const float conversion_factor = 3.3f / (1 << 12);
+    float temperature = 27.0f - ((raw_value * conversion_factor) - 0.706f) / 0.001721f;
+    return temperature;
 }

@@ -9,9 +9,7 @@ int main()
     float volume = 2.0;
 
     //Incialização do sistema
-    set_sys_clock_khz(1250000,false); //Cofigura o clock
-    stdio_init_all();
-    config_pins_gpio();
+    init_local_def();
     config_i2c_display(&ssd);
 
     ssd1306_fill(&ssd, !cor); // Limpa o display
@@ -21,36 +19,8 @@ int main()
     ssd1306_draw_string(&ssd, "    AGUARDE", 5, 43); // Desenha uma string      
     ssd1306_send_data(&ssd); // Atualiza o display
     campainha(volume, 1000, slice_buzzer, buz_A);
-    
-    if(!start_remote())
-    {
-        if (netif_default) // Caso seja a interface de rede padrão - imprimir o IP do dispositivo.
-        {
-            ssd1306_fill(&ssd, !cor); // Limpa o display
-            ssd1306_draw_string(&ssd, "Conectado no IP", 5, 13); // Desenha uma string
-            ssd1306_draw_string(&ssd, ipaddr_ntoa(&netif_default->ip_addr), 15, 35);  
-            ssd1306_draw_string(&ssd, "    Porta 80", 5, 52); // Desenha uma string  
-            ssd1306_send_data(&ssd); // Atualiza o display
-        }
-        campainha(volume, 1000, slice_buzzer, buz_A);
-        slice[R] = config_pwm(LED_R, 1000);
-        slice[G] = config_pwm(LED_G, 1000);
-        slice[B] = config_pwm(LED_B, 1000);
 
-        duty_cicle(100,slice[G], LED_G);
-    }
-    else
-    {
-        campainha(volume, 1000, slice_buzzer, buz_A);
-        ssd1306_fill(&ssd, !cor); // Limpa o display
-        ssd1306_draw_string(&ssd, "Erro de Conex.", 5, 15); // Desenha uma string
-        ssd1306_draw_string(&ssd, "Verifique.", 5, 29);  
-        ssd1306_draw_string(&ssd, "Apenas Local", 5, 43); // Desenha uma string  
-        ssd1306_send_data(&ssd); // Atualiza o display
-        gpio_put(LED_R, 1);
-        gpio_put(LED_G, 0);
-        gpio_put(LED_B, 0);
-    }
+    init_remote_def(&ssd, slice_buzzer, slice);
 
     while (true)
     {
@@ -58,13 +28,8 @@ int main()
         if(c == '*')
             modo_gravacao();
         
-        
-        /* 
-        * Efetuar o processamento exigido pelo cyw43_driver ou pela stack TCP/IP.
-        * Este método deve ser chamado periodicamente a partir do ciclo principal 
-        * quando se utiliza um estilo de sondagem pico_cyw43_arch 
-        */
         cyw43_arch_poll(); // Necessário para manter o Wi-Fi ativo
+
         sleep_ms(100);      // Reduz o uso da CPU
     }
 

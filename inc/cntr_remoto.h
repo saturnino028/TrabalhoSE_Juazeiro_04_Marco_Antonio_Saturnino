@@ -16,10 +16,16 @@
 #include "credenciais_wifi.h"
 #include "pinout.h"
 
-/***********************  Defines ***********************/
-#define LED_PIN CYW43_WL_GPIO_LED_PIN   // GPIO do CI CYW43
+#include "ssd1306.h"
+
+/******************* Defines e Variaveis Globais ******************/
+
+#define LED_PIN CYW43_WL_GPIO_LED_PIN   // GPIO do CI CYW43 
 
 /******************* Prototipo de Funções *************************/
+
+void init_remote_def(ssd1306_t *ssd, uint _sliceBuzzer, uint _sliceLEDS[3]);
+
 err_t tcp_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err);
 
 err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err);
