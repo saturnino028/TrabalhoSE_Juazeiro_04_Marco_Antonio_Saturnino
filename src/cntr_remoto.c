@@ -8,38 +8,25 @@
 /**
  * @brief inicializar servidor remoto
  */
-void init_remote_def(ssd1306_t *ssd, uint _sliceBuzzer, uint _sliceLEDS[3])
+void init_remote_def(ssd1306_t *ssd)
 {    
     bool cor = true;    //Estado LEDs display
     float volume = 2.0; //Volume do buzzer
     if(!start_remote())
     {
-        if (netif_default) // Caso seja a interface de rede padrão - imprimir o IP do dispositivo.
-        {
-            ssd1306_fill(ssd, !cor); // Limpa o display
-            ssd1306_draw_string(ssd, "Conectado no IP", 5, 13); // Desenha uma string
-            ssd1306_draw_string(ssd, ipaddr_ntoa(&netif_default->ip_addr), 15, 35);  
-            ssd1306_draw_string(ssd, "    Porta 80", 5, 52); // Desenha uma string  
-            ssd1306_send_data(ssd); // Atualiza o display
-        }
-        campainha(volume, 1000, _sliceBuzzer, buz_A);
-        _sliceLEDS[R] = config_pwm(LED_R, 1000);
-        _sliceLEDS[G] = config_pwm(LED_G, 1000);
-        _sliceLEDS[B] = config_pwm(LED_B, 1000);
-
-        duty_cicle(100,_sliceLEDS[G], LED_G);
+        campainha(volume, 1000, slice_buzzer, buz_A);
+        duty_cicle(100,slice[G], LED_G);
     }
     else
     {
-        campainha(volume, 1000, _sliceBuzzer, buz_A);
+        campainha(volume, 1000, slice_buzzer, buz_A);
         ssd1306_fill(ssd, !cor); // Limpa o display
         ssd1306_draw_string(ssd, "Erro de Conex.", 5, 15); // Desenha uma string
         ssd1306_draw_string(ssd, "Verifique.", 5, 29);  
         ssd1306_draw_string(ssd, "Apenas Local", 5, 43); // Desenha uma string  
         ssd1306_send_data(ssd); // Atualiza o display
-        gpio_put(LED_R, 1);
-        gpio_put(LED_G, 0);
-        gpio_put(LED_B, 0);
+        duty_cicle(100, slice[R], LED_R);
+        sleep_ms(3000);
     }
     
 }
@@ -123,38 +110,13 @@ int start_remote()
 // Tratamento do request do usuário - digite aqui
 void user_request(char **request)
 {
-
-    if (strstr(*request, "GET /blue_on") != NULL)
+    if (strstr(*request, "GET /sis_on") != NULL)
     {
-        gpio_put(LED_B, 1);
+        campainha(2.0, 100, slice_buzzer, buz_A);
     }
-    else if (strstr(*request, "GET /blue_off") != NULL)
+    else if (strstr(*request, "GET /sis_off") != NULL)
     {
-        gpio_put(LED_B, 0);
-    }
-    else if (strstr(*request, "GET /green_on") != NULL)
-    {
-        gpio_put(LED_G, 1);
-    }
-    else if (strstr(*request, "GET /green_off") != NULL)
-    {
-        gpio_put(LED_G, 0);
-    }
-    else if (strstr(*request, "GET /red_on") != NULL)
-    {
-        gpio_put(LED_R, 1);
-    }
-    else if (strstr(*request, "GET /red_off") != NULL)
-    {
-        gpio_put(LED_R, 0);
-    }
-    else if (strstr(*request, "GET /on") != NULL)
-    {
-        cyw43_arch_gpio_put(LED_PIN, 1);
-    }
-    else if (strstr(*request, "GET /off") != NULL)
-    {
-        cyw43_arch_gpio_put(LED_PIN, 0);
+        campainha(2.0, 500, slice_buzzer, buz_A);
     }
 };
 
@@ -177,41 +139,56 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
 
     // Tratamento de request - Controle dos LEDs
     user_request(&request);
-    
-    // Leitura da temperatura interna
-    float temperature = temp_read();
 
     // Cria a resposta HTML
-    char html[4096];
+    char html[1024];
 
     // Instruções html do webserver
-    snprintf(html, sizeof(html), // Formatar uma string e armazená-la em um buffer de caracteres
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Type: text/html\r\n"
-             "\r\n"
-             "<!DOCTYPE html>\n"
-             "<html>\n"
-             "<head>\n"
-             "<title> Embarcatech - LED Control </title>\n"
-             "<style>\n"
-             "body { background-color: #b5e5fb; font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }\n"
-             "h1 { font-size: 64px; margin-bottom: 30px; }\n"
-             "button { background-color: LightGray; font-size: 36px; margin: 10px; padding: 20px 40px; border-radius: 10px; }\n"
-             ".temperature { font-size: 48px; margin-top: 30px; color: #333; }\n"
-             "</style>\n"
-             "</head>\n"
-             "<body>\n"
-             "<h1>Embarcatech: LED Control</h1>\n"
-             "<form action=\"./blue_on\"><button>Ligar Azul</button></form>\n"
-             "<form action=\"./blue_off\"><button>Desligar Azul</button></form>\n"
-             "<form action=\"./green_on\"><button>Ligar Verde</button></form>\n"
-             "<form action=\"./green_off\"><button>Desligar Verde</button></form>\n"
-             "<form action=\"./red_on\"><button>Ligar Vermelho</button></form>\n"
-             "<form action=\"./red_off\"><button>Desligar Vermelho</button></form>\n"
-             "<p class=\"temperature\">Temperatura Interna: %.2f &deg;C</p>\n"
-             "</body>\n"
-             "</html>\n",
-             temperature);
+    snprintf
+    (
+        html, sizeof(html), // Formatar uma string e armazená-la em um buffer de caracteres
+        
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n"
+
+        "<!DOCTYPE html>\n"
+
+        "<html>\n"
+            "<head>\n"
+                "<title>Embarcatech</title>\n"
+            "</head>\n"
+            "<body style='background-color:black; color:white; text-align:center; font-family:sans-serif;'>\n"
+                "<h1>Sistema de Monitoramento de Ativos</h1>\n" 
+
+                "<div style='margin-top:40px;'>\n"
+                "  <div><strong>Temperatura:</strong></div>\n"
+                "  <div style='font-size:28px;'>%.1f &ordm;C</div>\n"
+                "</div>\n"
+
+                "<div style='margin-top:30px;'>\n"
+                "  <strong>EMBARCATECH</strong>\n"
+                "</div>\n"
+
+                "<div style='margin-top:30px;'>\n"
+                "  <div><strong>Ventoinha:</strong></div>\n"
+                "  <div style='font-size:28px;'>%d RPM</div>\n"
+                "</div>\n"
+
+                "<div style='margin-top:40px;'>\n"
+                "  <form action=\"./sis_on\" method=\"get\" style='display:inline-block; margin:10px;'>\n"
+                "    <button style='font-size:20px; padding:10px 20px;'>Ligar</button>\n"
+                "  </form>\n"
+                "  <form action=\"./sis_off\" method=\"get\" style='display:inline-block; margin:10px;'>\n"
+                "    <button style='font-size:20px; padding:10px 20px;'>Desligar</button>\n"
+                "  </form>\n"
+                "</div>\n"
+
+            "</body>\n"
+        "</html>\n",
+
+        temperature, velocidade_ventoinha
+    );
 
     // Escreve dados para envio (mas não os envia imediatamente).
     tcp_write(tpcb, html, strlen(html), TCP_WRITE_FLAG_COPY);

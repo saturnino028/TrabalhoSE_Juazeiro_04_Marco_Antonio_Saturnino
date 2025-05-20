@@ -24,7 +24,7 @@
 
 /******************* Prototipo de Funções *************************/
 
-void init_remote_def(ssd1306_t *ssd, uint _sliceBuzzer, uint _sliceLEDS[3]);
+void init_remote_def(ssd1306_t *ssd);
 
 err_t tcp_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err);
 

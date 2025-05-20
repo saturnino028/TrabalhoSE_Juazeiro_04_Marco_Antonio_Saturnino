@@ -1,7 +1,7 @@
 #ifndef CNTR_LOCAL_H
 #define CNTR_LOCAL_H
 
-/***********************  Includes ***********************/
+/***********************  Includes ******************************/
 #include "hardware/clocks.h"
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
@@ -9,10 +9,14 @@
 #include "cntr_remoto.h"
 #include "pinout.h"
 
-/***********************  Defines ***********************/
+/*************  Defines e Variáveis Globais ***********************/
 #define R 0
 #define G 1
 #define B 2
+
+extern volatile float temperature;
+extern volatile uint8_t velocidade_ventoinha;
+extern volatile uint slice_buzzer, slice[3];
 
 /******************* Prototipo de Funções *************************/
 void init_local_def();
@@ -26,6 +30,7 @@ int64_t fim_campainha(alarm_id_t id, void *user_data);
 void modo_gravacao();
 void botoes_callback(uint gpio, uint32_t events);
 
-float temp_read(void);
+void temp_read(void);
+void verif_status(ssd1306_t *ssd);
 
 #endif //CNTR_LOCAL_H

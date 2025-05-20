@@ -5,7 +5,6 @@ int main()
     //Declaração de Variáveis
     ssd1306_t ssd;
     bool cor = true;    //Estado LEDs display
-    uint slice[3], slice_buzzer = config_pwm(buz_A, 1000);
     float volume = 2.0;
 
     //Incialização do sistema
@@ -20,7 +19,7 @@ int main()
     ssd1306_send_data(&ssd); // Atualiza o display
     campainha(volume, 1000, slice_buzzer, buz_A);
 
-    init_remote_def(&ssd, slice_buzzer, slice);
+    init_remote_def(&ssd);
 
     while (true)
     {
@@ -30,7 +29,9 @@ int main()
         
         cyw43_arch_poll(); // Necessário para manter o Wi-Fi ativo
 
-        sleep_ms(100);      // Reduz o uso da CPU
+        verif_status(&ssd);
+
+        sleep_ms(500);      // Reduz o uso da CPU
     }
 
     //Desligar a arquitetura CYW43.
