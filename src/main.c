@@ -17,6 +17,7 @@ int main()
     ssd1306_draw_string(&ssd, "   RESTIC 37", 5, 29); // Desenha uma string  
     ssd1306_draw_string(&ssd, "    AGUARDE", 5, 43); // Desenha uma string      
     ssd1306_send_data(&ssd); // Atualiza o display
+
     campainha(volume, 1000, slice_buzzer, buz_A);
 
     init_remote_def(&ssd);
@@ -27,11 +28,26 @@ int main()
         if(c == '*')
             modo_gravacao();
         
-        cyw43_arch_poll(); // Necessário para manter o Wi-Fi ativo
+        if(!flag_de_parada)
+        {
+            cyw43_arch_poll(); // Necessário para manter o Wi-Fi ativo
+            verif_status(&ssd);
+        }
+        else
+        {
+            duty_cicle(0.0, slice[R], LED_R);
+            duty_cicle(0.0, slice[G], LED_G);
+            duty_cicle(0.0, slice[B], LED_B);
+            ssd1306_fill(&ssd, !cor); // Limpa o display
+            ssd1306_rect(&ssd, 3, 3, 122, 58, cor, !cor); // Desenha um retângulo
+            ssd1306_draw_string(&ssd, "Sistema Parado", 5, 15); // Desenha uma string
+            ssd1306_draw_string(&ssd, "    Tecle A  ", 5, 29); // Desenha uma string  
+            ssd1306_draw_string(&ssd, "  Para Voltar", 5, 43); // Desenha uma string      
+            ssd1306_send_data(&ssd); // Atualiza o display
 
-        verif_status(&ssd);
+        }
 
-        sleep_ms(500);      // Reduz o uso da CPU
+        sleep_ms(200);
     }
 
     //Desligar a arquitetura CYW43.

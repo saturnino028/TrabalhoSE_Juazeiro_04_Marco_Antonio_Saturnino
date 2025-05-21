@@ -17,6 +17,7 @@
 extern volatile float temperature;
 extern volatile uint8_t velocidade_ventoinha;
 extern volatile uint slice_buzzer, slice[3];
+extern volatile bool flag_de_parada;
 
 /******************* Prototipo de Funções *************************/
 void init_local_def();

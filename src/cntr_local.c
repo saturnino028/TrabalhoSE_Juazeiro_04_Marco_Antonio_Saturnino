@@ -10,6 +10,8 @@ volatile float temperature, temperature_ant = 0.0;
 volatile uint8_t velocidade_ventoinha = 20;
 volatile float volume_buz = 2.0;
 
+volatile bool flag_de_parada = 0;
+
 volatile uint slice_buzzer;
 volatile uint slice[3];
 
@@ -35,9 +37,13 @@ void init_local_def()
     adc_set_temp_sensor_enabled(true);
 
     slice_buzzer = config_pwm(buz_A, 1000);
+
     slice[R] = config_pwm(LED_R, 1000);
     slice[G] = config_pwm(LED_G, 1000);
     slice[B] = config_pwm(LED_B, 1000);
+
+    gpio_set_irq_enabled_with_callback(bot_A, GPIO_IRQ_EDGE_FALL, true, &botoes_callback);
+    gpio_set_irq_enabled_with_callback(bot_B, GPIO_IRQ_EDGE_FALL, true, &botoes_callback);
 }
 
 /**
@@ -142,13 +148,9 @@ void botoes_callback(uint gpio, uint32_t events)
     {
         passado  = agora;
         if(gpio == bot_A)
-        {
-
-        }
+            flag_de_parada = 0;
         else if(gpio == bot_B)
-        {
-
-        }
+            flag_de_parada = 1;
     }
 }
 
@@ -206,9 +208,9 @@ void verif_status(ssd1306_t *ssd)
         {
             velocidade_ventoinha =70;
 
-            duty_cicle(velocidade_ventoinha, slice[R], LED_R);
-            duty_cicle(velocidade_ventoinha, slice[G], LED_G);
-            duty_cicle(0, slice[B], LED_B);
+            duty_cicle(0, slice[R], LED_R);
+            duty_cicle(0, slice[G], LED_G);
+            duty_cicle(velocidade_ventoinha, slice[B], LED_B);
 
             sprintf(buffer, "%0.1f", temperature);
             ssd1306_draw_string(ssd, buffer, 8, 52); // Desenha uma string  

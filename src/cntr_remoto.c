@@ -113,10 +113,12 @@ void user_request(char **request)
     if (strstr(*request, "GET /sis_on") != NULL)
     {
         campainha(2.0, 100, slice_buzzer, buz_A);
+        flag_de_parada = 0;
     }
     else if (strstr(*request, "GET /sis_off") != NULL)
     {
         campainha(2.0, 500, slice_buzzer, buz_A);
+        flag_de_parada = 1;
     }
 };
 
